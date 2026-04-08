@@ -1,0 +1,205 @@
+{
+  "info": {
+    "name": "E-Commerce API Testing Project",
+    "_postman_id": "12345-ecommerce-api",
+    "description": "Full API testing collection with Auth, CRUD, Assertions, Negative Testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "login"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"mor_2314\",\n  \"password\": \"83r5^_\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Response time < 500ms\", () => pm.expect(pm.response.responseTime).to.be.below(500));",
+              "let json = pm.response.json();",
+              "pm.test(\"Token exists\", () => pm.expect(json.token).to.exist);",
+              "pm.environment.set(\"token\", json.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Get Products",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/products",
+          "host": ["{{base_url}}"],
+          "path": ["products"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Response time < 500ms\", () => pm.expect(pm.response.responseTime).to.be.below(500));",
+              "let json = pm.response.json();",
+              "pm.test(\"Products exist\", () => pm.expect(json.length).to.be.above(0));",
+              "pm.test(\"Product has fields\", () => {",
+              "  pm.expect(json[0]).to.have.property('id');",
+              "  pm.expect(json[0]).to.have.property('title');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Create Cart",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/carts",
+          "host": ["{{base_url}}"],
+          "path": ["carts"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": 1,\n  \"date\": \"2026-04-08\",\n  \"products\": [\n    { \"productId\": 1, \"quantity\": 2 }\n  ]\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Cart created\", () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+              "pm.environment.set(\"cart_id\", pm.response.json().id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Update Cart",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/carts/{{cart_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["carts", "{{cart_id}}"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": 1,\n  \"products\": [\n    { \"productId\": 2, \"quantity\": 3 }\n  ]\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Updated successfully\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Delete Cart",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/carts/{{cart_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["carts", "{{cart_id}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Deleted successfully\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Negative - Invalid Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "login"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"mor_2314\",\n  \"password\": \"wrong\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Unauthorized\", () => pm.expect(pm.response.code).to.be.oneOf([400,401]));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Negative - Missing Fields",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "login"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Bad Request\", () => pm.expect(pm.response.code).to.be.oneOf([400,401]));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
